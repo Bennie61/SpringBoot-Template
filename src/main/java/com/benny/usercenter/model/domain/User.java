@@ -1,9 +1,7 @@
 package com.benny.usercenter.model.domain;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
+
 import java.io.Serializable;
 import java.util.Date;
 import lombok.Data;
@@ -73,7 +71,9 @@ public class User implements Serializable {
 
     /**
      * 是否删除
+     * @TableLogic 用来辨认 isDelete是逻辑删除字段
      */
+    @TableLogic
     private Integer isDelete;
 
     @TableField(exist = false)

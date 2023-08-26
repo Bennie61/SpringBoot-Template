@@ -90,7 +90,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public User doLogin(String userAccount, String userPassword, HttpServletRequest request) {
+    public User userLogin(String userAccount, String userPassword, HttpServletRequest request) {
         // 1. 校验
         if(StringUtils.isAnyBlank(userAccount, userPassword)){
             return null;
@@ -127,6 +127,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         // 3. 用户脱敏
         User safetyUser =new User();
+        /**
+         * Note:
+         * 使用插件，Generate all setter with default value，快速生成类的默认值
+         */
         safetyUser.setId(user.getId());
         safetyUser.setUsername(user.getUsername());
         safetyUser.setUserAccount(user.getUserAccount());
@@ -136,11 +140,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         safetyUser.setEmail(user.getEmail());
         safetyUser.setUserStatus(0);
         safetyUser.setCreateTime(user.getCreateTime());
-
-        /**
-         * Note:
-         * 使用插件，Generate all setter with default value，快速生成类的默认值
-         */
 
         //4. 记录用户的登录态
         request.getSession().setAttribute(USER_LOGIN_STATE, safetyUser);
