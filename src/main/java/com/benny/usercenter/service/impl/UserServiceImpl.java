@@ -141,7 +141,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      * @return 脱敏后的 safetyUser
      */
     @Override
-     public User getSafetyUser(User originalUser){
+    public User getSafetyUser(User originalUser){
          User safetyUser = new User();
          /**
           * Note:
