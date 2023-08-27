@@ -10,7 +10,12 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.benny.usercenter.contant.UserConstant.ADMIN_ROLE;
+import static com.benny.usercenter.contant.UserConstant.USER_LOGIN_STATE;
 
 /**
  * @Date 2023/8/26 12:48
@@ -79,21 +84,48 @@ public class UserController {
     }
 
     @GetMapping("/search")
-    public List<User> searchUsers(String username){
+    public List<User> searchUsers(String username,HttpServletRequest request){
+        // 仅管理员可查询
+        if (!isAdmin(request)){
+            return new ArrayList<>();
+        }
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         if (StringUtils.isNotBlank(username)){
             queryWrapper.like("username",username);
         }
-        return userService.list(queryWrapper);
+        List<User> userList = userService.list(queryWrapper);
+        //Note: Java 8 的知识
+        return userList.stream().map(user ->{
+            return userService.getSafetyUser(user);
+        }).collect(Collectors.toList());
     }
 
     @PostMapping("/delete")
-    public boolean deleteUser(@RequestBody long id){
+    public boolean deleteUser(@RequestBody long id, HttpServletRequest request){
         // Note：从前端传来的参数就用 @RequestBody
+        // 仅管理员可删除
+        if (!isAdmin(request)){
+            return false;
+        }
         if (id <= 0){
             return false;
         }
         return userService.removeById(id);
+    }
+
+    /**
+     * 是否为管理员
+     * @param request
+     * @return boolean
+     */
+    private boolean isAdmin(HttpServletRequest request){
+        // 鉴权，仅管理员可操作
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        User user = (User) userObj;
+        if (user == null || user.getUserRole()!= ADMIN_ROLE){
+            return false;
+        }
+        return true;
     }
 
 }

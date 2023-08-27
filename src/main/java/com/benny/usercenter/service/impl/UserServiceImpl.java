@@ -1,5 +1,4 @@
 package com.benny.usercenter.service.impl;
-import java.util.Date;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -15,6 +14,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.benny.usercenter.contant.UserConstant.USER_LOGIN_STATE;
 
 /**
 * @author benny
@@ -36,7 +37,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     /**
      * 用户登录态键
      */
-    private static final String USER_LOGIN_STATE = "userLoginState";
+    // public static final String USER_LOGIN_STATE = "userLoginState";
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
@@ -126,28 +127,38 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
 
         // 3. 用户脱敏
-        User safetyUser =new User();
-        /**
-         * Note:
-         * 使用插件，Generate all setter with default value，快速生成类的默认值
-         */
-        safetyUser.setId(user.getId());
-        safetyUser.setUsername(user.getUsername());
-        safetyUser.setUserAccount(user.getUserAccount());
-        safetyUser.setAvatarUrl(user.getAvatarUrl());
-        safetyUser.setGender(user.getGender());
-        safetyUser.setPhone(user.getPhone());
-        safetyUser.setEmail(user.getEmail());
-        safetyUser.setUserStatus(0);
-        safetyUser.setCreateTime(user.getCreateTime());
+        User safetyUser = getSafetyUser(user);
 
         //4. 记录用户的登录态
         request.getSession().setAttribute(USER_LOGIN_STATE, safetyUser);
-
         // 返回脱敏后的用户信息
         return safetyUser;
-
     }
+
+    /**
+     * 用户脱敏
+     * @param originalUser 原始的 user
+     * @return 脱敏后的 safetyUser
+     */
+    @Override
+     public User getSafetyUser(User originalUser){
+         User safetyUser = new User();
+         /**
+          * Note:
+          * 使用插件，Generate all setter with default value，快速生成类的默认值
+          */
+         safetyUser.setId(originalUser.getId());
+         safetyUser.setUsername(originalUser.getUsername());
+         safetyUser.setUserAccount(originalUser.getUserAccount());
+         safetyUser.setAvatarUrl(originalUser.getAvatarUrl());
+         safetyUser.setGender(originalUser.getGender());
+         safetyUser.setPhone(originalUser.getPhone());
+         safetyUser.setEmail(originalUser.getEmail());
+         safetyUser.setUserRole(originalUser.getUserRole());
+         safetyUser.setUserStatus(0);
+         safetyUser.setCreateTime(originalUser.getCreateTime());
+         return safetyUser;
+     }
 }
 
 
