@@ -8,13 +8,14 @@ import java.util.Date;
 
 /**
  * 用户表
- * @TableName user
  */
 @TableName(value ="user")
 @Data
 public class User implements Serializable {
     /**
-     * 
+     * Note：当 Java对象需要在网络上传输或者需要持久化存储到文件中时，需要使用 Java序列化。
+     * Java序列化是将对象转换成字节序列的过程，反序列化就是将字节序列转换为目标对象的过程。
+     * 使用方法：让类实现 Serializable接口，标注该类对象是可被序列化的。
      */
     @TableId(type = IdType.AUTO)
     private Long id;
@@ -82,4 +83,8 @@ public class User implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+    /*
+        Note: private static final long serialVersionUID = 1L;
+        固定的 1L（一般这么做。可以确保代码一致时反序列化成功）
+     */
 }
