@@ -9,11 +9,11 @@ spring:
   # session 设置失效时间
   session:
     timeout: 86400
+# Note: SpringBoot项目设置了 context-path之后，假如设置为 /api，那么项目启动之后，访问项目的所有请求的 URI必须 /api 开头，才能访问进项目。
+# 指定接口全局 api , 接口例子: localhost:8080/api/XXX
 server:
   port: 8080
   servlet:
-    # Note: SpringBoot项目设置了 context-path之后，假如设置为 /api，那么项目启动之后，访问项目的所有请求的 URI必须 /api 开头，才能访问进项目。
-    # 指定接口全局 api , 接口例子: localhost:8080/api/XXX
     context-path: /api
 mybatis-plus:
   configuration:

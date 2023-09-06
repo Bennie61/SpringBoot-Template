@@ -25,7 +25,7 @@ import static com.benny.usercenter.contant.UserConstant.USER_LOGIN_STATE;
 /** Note:
  * @RestController 是 @controller和 @ResponseBody 的结合
  * @Controller 将当前修饰的类注入SpringBoot IOC容器，使得从该类所在的项目跑起来的过程中，这个类就被实例化。
- * @ResponseBody 它的作用简短截说就是指该类中所有的 API 接口返回的数据，甭管你对应的方法返回Map或是其他Object，
+ * @ResponseBody 它的作用简短说就是指该类中所有的 API 接口返回的数据，甭管你对应的方法返回Map或是其他Object，
  * 它会以Json字符串的形式返回给客户端
  * 原文链接：https://blog.csdn.net/qq_41192218/article/details/113354167
  *
@@ -51,7 +51,7 @@ public class UserController {
         /**
          * Note: 插件 Auto filling Java call arguments
          * 使用 Alt+Enter 组合键，调出 "Auto fill call parameters" ，
-         * 自动使用该函数定义的参数名填充参数列表。
+         * 自动使用该函数定义的参数名填充函数的参数列表。
          */
         if (userRegisterRequest == null){
             return null;

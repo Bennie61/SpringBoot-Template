@@ -29,8 +29,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Resource
     private UserMapper userMapper;
 
-    /*
-        盐值，混淆密码
+    /**
+     * SALT:盐值，用来混淆密码
      */
     private static final String SALT = "yupi";
     // Note：输入 prsf，快速打出常量的类型。
