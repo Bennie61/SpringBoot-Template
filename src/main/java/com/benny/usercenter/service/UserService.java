@@ -9,7 +9,8 @@ import javax.servlet.http.HttpServletRequest;
  * @author benny
  * @description 针对表【user(用户表)】的数据库操作 Service
  * @createDate 2023-08-18 11:18:12
- * Note: MyBatis-Plus通用的 IService接口
+ * Note: MyBatis-Plus通用的 IService接口，其中包含很多操作数据库的方法；
+ * 之后可以在controller层使用userService.xxx来操作数据库。
  */
 public interface UserService extends IService<User> {
     // Note: 鼠标放在接口名xxx上，按ALT+Enter，选择 implement method ‘xxx’,

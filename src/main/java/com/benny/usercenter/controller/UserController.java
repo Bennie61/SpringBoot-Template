@@ -39,6 +39,10 @@ import static com.benny.usercenter.contant.UserConstant.USER_LOGIN_STATE;
 @RestController
 @RequestMapping("/user")
 public class UserController {
+    /**
+     * Note: 由于UserService 继承了 IService<User>，
+     * 故其实例 userService中既包含自定义方法也包含 MyBatisPlus操作数据库的方法。
+     */
     @Resource
     private UserService userService;
 
@@ -81,6 +85,18 @@ public class UserController {
             return null;
         }
         return userService.userLogin(userAccount, userPassword, request);
+    }
+    @GetMapping("/current")
+    public User getCurrentUser(HttpServletRequest request){
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        User currentUser = (User)userObj;
+        if(currentUser == null){
+            return null;
+        }
+        long userId = currentUser.getId(); // 获取session中保存的用户id
+        // TODO 校验用户是否合法
+        User user = userService.getById(userId);
+        return userService.getSafetyUser(user);
     }
 
     @GetMapping("/search")
