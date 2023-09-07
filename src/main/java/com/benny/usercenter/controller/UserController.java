@@ -63,14 +63,15 @@ public class UserController {
         String userAccount = userRegisterRequest.getUserAccount();
         String userPassword = userRegisterRequest.getUserPassword();
         String checkPassword = userRegisterRequest.getCheckPassword();
+        String planetCode = userRegisterRequest.getPlanetCode();
         /**
          * Note:
          *  StringUtils.isAnyBlank(v1,v2,v3...),任意一个参数为空的话，返回 true。
          */
-        if (StringUtils.isAnyBlank(userAccount,userPassword,checkPassword)){
+        if (StringUtils.isAnyBlank(userAccount,userPassword,checkPassword,planetCode)){
             return null;
         }
-        long id = userService.userRegister(userAccount, userPassword, checkPassword);
+        long id = userService.userRegister(userAccount, userPassword, checkPassword, planetCode);
         return id;
     }
 
@@ -86,6 +87,16 @@ public class UserController {
         }
         return userService.userLogin(userAccount, userPassword, request);
     }
+
+    @PostMapping("/logout")
+    public Integer userLogout(HttpServletRequest request){
+        if (request == null){
+            return null;
+        }
+        return userService.userLogout(request);
+    }
+
+
     @GetMapping("/current")
     public User getCurrentUser(HttpServletRequest request){
         Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
@@ -128,7 +139,6 @@ public class UserController {
         }
         return userService.removeById(id);
     }
-
     /**
      * 是否为管理员
      * @param request

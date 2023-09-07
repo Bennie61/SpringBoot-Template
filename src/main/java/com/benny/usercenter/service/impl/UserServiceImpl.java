@@ -15,6 +15,9 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * 用户登录态键
+ */
 import static com.benny.usercenter.contant.UserConstant.USER_LOGIN_STATE;
 
 /**
@@ -34,17 +37,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      */
     private static final String SALT = "yupi";
     // Note：输入 prsf，快速打出常量的类型。
-    /**
-     * 用户登录态键
-     */
+
     // public static final String USER_LOGIN_STATE = "userLoginState";
 
     @Override
-    public long userRegister(String userAccount, String userPassword, String checkPassword) {
+    public long userRegister(String userAccount, String userPassword, String checkPassword, String planetCode) {
         // 快速测试方法，鼠标放在放在方法上，按Alt+Enter，选择 Generate missed test methods，
         // 会在test相对应的目录下生成测试类
         // 1. 校验
-        if(StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)){
+        if(StringUtils.isAnyBlank(userAccount, userPassword, checkPassword, planetCode)){
             return -1;
         }
         if (userAccount.length() < 4){
@@ -53,7 +54,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (userPassword.length() < 8 || checkPassword.length() < 8 ){
             return -1;
         }
-
+        if (planetCode.length() > 5){
+            return -1;
+        }
         //账户不能包含特殊字符
         String validPattern = "[`~!@#$%^&*()+=|{}':;',\\\\[\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
         Matcher matcher = Pattern.compile(validPattern).matcher(userAccount);
@@ -71,18 +74,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // QueryWrapper就是在使用 Mybatis-plus 中真实用到的一种技术，也叫作构造器，能简化sql的操作。
         // QueryWrapper其实可以理解成一个放查询条件的盒子，我们把查询条件放在里面，他就会自动按照对应的条件进行查询数据。
         // 构建一个查询的wrapper
-        queryWrapper.eq("userAccount",userAccount);
+        queryWrapper.eq("userAccount", userAccount);
         long count = userMapper.selectCount(queryWrapper);
         if(count > 0){
             return -1;
         }
+
+        // 星球编号不能重复
+        queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("planetCode", planetCode);
+        count = userMapper.selectCount(queryWrapper);
+        if(count > 0){
+            return -1;
+        }
+
         // 2. 加密 Note：使用加密工具库 DigestUtils。
         String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
         // 3. 插入数据
         User user = new User();
         user.setUserAccount(userAccount);
         user.setUserPassword(encryptPassword);
-
+        user.setPlanetCode(planetCode);
         boolean saveResult = this.save(user);
         if (!saveResult){
             return -1;
@@ -157,11 +169,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
          safetyUser.setGender(originalUser.getGender());
          safetyUser.setPhone(originalUser.getPhone());
          safetyUser.setEmail(originalUser.getEmail());
+         safetyUser.setPlanetCode(originalUser.getPlanetCode());
          safetyUser.setUserRole(originalUser.getUserRole());
          safetyUser.setUserStatus(0);
          safetyUser.setCreateTime(originalUser.getCreateTime());
          return safetyUser;
      }
+
+    /**
+     * 用户注销
+     * @param request
+     */
+    @Override
+    public int userLogout(HttpServletRequest request) {
+        // 移除登录态
+        request.getSession().removeAttribute(USER_LOGIN_STATE);
+        return 1;
+    }
 }
 
 
