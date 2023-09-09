@@ -1,26 +1,23 @@
 package com.benny.usercenter.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.benny.usercenter.common.BaseResponse;
+import com.benny.usercenter.common.ErrorCode;
+import com.benny.usercenter.common.ResultUtils;
+import com.benny.usercenter.exception.BusinessException;
 import com.benny.usercenter.model.domain.User;
 import com.benny.usercenter.model.domain.request.UserLoginRequest;
 import com.benny.usercenter.model.domain.request.UserRegisterRequest;
 import com.benny.usercenter.service.UserService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
-
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.benny.usercenter.contant.UserConstant.ADMIN_ROLE;
 import static com.benny.usercenter.contant.UserConstant.USER_LOGIN_STATE;
-
-/**
- * @Date 2023/8/26 12:48
- * @Description ToDo
- **/
 
 /** Note:
  * @RestController 是 @controller和 @ResponseBody 的结合
@@ -40,7 +37,7 @@ import static com.benny.usercenter.contant.UserConstant.USER_LOGIN_STATE;
 @RequestMapping("/user")
 public class UserController {
     /**
-     * Note: 由于UserService 继承了 IService<User>，
+     * Note: 由于 UserService 继承了 IService<User>，
      * 故其实例 userService中既包含自定义方法也包含 MyBatisPlus操作数据库的方法。
      */
     @Resource
@@ -51,14 +48,15 @@ public class UserController {
      * Note:
      * @RequestBody 主要用来接收前端传递给后端的json字符串中的数据的(请求体中的数据的)
      */
-    public Long userRegister(@RequestBody UserRegisterRequest userRegisterRequest){
+    public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest){
         /**
          * Note: 插件 Auto filling Java call arguments
-         * 使用 Alt+Enter 组合键，调出 "Auto fill call parameters" ，
+         * 快捷键：Alt+Enter 组合键，调出 "Auto fill call parameters" ，
          * 自动使用该函数定义的参数名填充函数的参数列表。
          */
         if (userRegisterRequest == null){
-            return null;
+//            return ResultUtils.error(ErrorCode.PARAMS_RREOR);
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"参数值为 null");
         }
         String userAccount = userRegisterRequest.getUserAccount();
         String userPassword = userRegisterRequest.getUserPassword();
@@ -69,52 +67,63 @@ public class UserController {
          *  StringUtils.isAnyBlank(v1,v2,v3...),任意一个参数为空的话，返回 true。
          */
         if (StringUtils.isAnyBlank(userAccount,userPassword,checkPassword,planetCode)){
-            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数值为 null");
         }
-        long id = userService.userRegister(userAccount, userPassword, checkPassword, planetCode);
-        return id;
+        long result = userService.userRegister(userAccount, userPassword, checkPassword, planetCode);
+//        return new BaseResponse<>(0, result, "ok");
+//        System.out.println("---------result:");
+//        System.out.println(result);
+        return ResultUtils.success(result);
     }
 
     @PostMapping("/login")
-    public User userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request){
+    public BaseResponse<User> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request){
         if (userLoginRequest == null){
-            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数值为 null");
+//            return null;
         }
         String userAccount = userLoginRequest.getUserAccount();
         String userPassword = userLoginRequest.getUserPassword();
         if (StringUtils.isAnyBlank(userAccount,userPassword)){
-            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号或密码为空");
         }
-        return userService.userLogin(userAccount, userPassword, request);
+        User user = userService.userLogin(userAccount, userPassword, request);
+//        return new BaseResponse<>(0, user, "ok");
+        return ResultUtils.success(user);
     }
 
     @PostMapping("/logout")
-    public Integer userLogout(HttpServletRequest request){
+    public BaseResponse<Integer> userLogout(HttpServletRequest request){
         if (request == null){
-            return null;
+//            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "request为null");
         }
-        return userService.userLogout(request);
+        int result = userService.userLogout(request);
+        return ResultUtils.success(result);
     }
 
 
     @GetMapping("/current")
-    public User getCurrentUser(HttpServletRequest request){
+    public BaseResponse<User> getCurrentUser(HttpServletRequest request){
         Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
         User currentUser = (User)userObj;
         if(currentUser == null){
-            return null;
+//            return null;
+            throw new BusinessException(ErrorCode.NOT_LOGIN);
         }
         long userId = currentUser.getId(); // 获取session中保存的用户id
         // TODO 校验用户是否合法
         User user = userService.getById(userId);
-        return userService.getSafetyUser(user);
+        User safetyUser = userService.getSafetyUser(user);
+        return ResultUtils.success(safetyUser);
     }
 
     @GetMapping("/search")
-    public List<User> searchUsers(String username,HttpServletRequest request){
+    public BaseResponse<List<User>> searchUsers(String username, HttpServletRequest request){
         // 仅管理员可查询
         if (!isAdmin(request)){
-            return new ArrayList<>();
+            throw new BusinessException(ErrorCode.NO_AUTH, "无权限");
+//            return new ArrayList<>();
         }
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         if (StringUtils.isNotBlank(username)){
@@ -122,22 +131,25 @@ public class UserController {
         }
         List<User> userList = userService.list(queryWrapper);
         //Note: Java 8 的知识
-        return userList.stream().map(user ->{
+        List<User> list = userList.stream().map(user -> {
             return userService.getSafetyUser(user);
         }).collect(Collectors.toList());
+        return ResultUtils.success(list);
     }
 
     @PostMapping("/delete")
-    public boolean deleteUser(@RequestBody long id, HttpServletRequest request){
+    public BaseResponse<Boolean> deleteUser(@RequestBody long id, HttpServletRequest request){
         // Note：从前端传来的参数就用 @RequestBody
         // 仅管理员可删除
         if (!isAdmin(request)){
-            return false;
+            throw new BusinessException(ErrorCode.NO_AUTH, "无权限");
         }
         if (id <= 0){
-            return false;
+//            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        return userService.removeById(id);
+        boolean b = userService.removeById(id);
+        return ResultUtils.success(b);
     }
     /**
      * 是否为管理员

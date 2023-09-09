@@ -2,6 +2,8 @@ package com.benny.usercenter.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.benny.usercenter.common.ErrorCode;
+import com.benny.usercenter.exception.BusinessException;
 import com.benny.usercenter.model.domain.User;
 import com.benny.usercenter.service.UserService;
 import com.benny.usercenter.mapper.UserMapper;
@@ -9,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
-
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.regex.Matcher;
@@ -19,7 +20,6 @@ import java.util.regex.Pattern;
  * 用户登录态键
  */
 import static com.benny.usercenter.contant.UserConstant.USER_LOGIN_STATE;
-
 /**
 * @author benny
 * @description 针对表【user(用户表)】的数据库操作Service实现
@@ -36,36 +36,39 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      * SALT:盐值，用来混淆密码
      */
     private static final String SALT = "yupi";
-    // Note：输入 prsf，快速打出常量的类型。
-
+    // 快捷键：输入 prsf，快速打出常量的类型。
     // public static final String USER_LOGIN_STATE = "userLoginState";
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword, String planetCode) {
-        // 快速测试方法，鼠标放在放在方法上，按Alt+Enter，选择 Generate missed test methods，
-        // 会在test相对应的目录下生成测试类
+        /** Note:
+         *  快捷键：快速测试方法，鼠标放在放在方法上，按 Alt+Enter，选择 Generate missed test methods，会在test相对应的目录下生成测试类。
+         */
         // 1. 校验
         if(StringUtils.isAnyBlank(userAccount, userPassword, checkPassword, planetCode)){
-            return -1;
+//            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
         }
         if (userAccount.length() < 4){
-            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账号过短");
         }
         if (userPassword.length() < 8 || checkPassword.length() < 8 ){
-            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码过短");
         }
         if (planetCode.length() > 5){
-            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "星球编号过长");
         }
         //账户不能包含特殊字符
         String validPattern = "[`~!@#$%^&*()+=|{}':;',\\\\[\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
         Matcher matcher = Pattern.compile(validPattern).matcher(userAccount);
         if (matcher.find()) {
-            return -1;
+//            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号存在特殊字符");
         }
         // 密码和校验密码相同
         if(!userPassword.equals(checkPassword)){
-            return -1;
+//            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码和校验密码不同");
         }
 
         // 账户不能重复
@@ -77,7 +80,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         queryWrapper.eq("userAccount", userAccount);
         long count = userMapper.selectCount(queryWrapper);
         if(count > 0){
-            return -1;
+            throw new BusinessException(ErrorCode.REPEAT_ERROR, "账号重复");
         }
 
         // 星球编号不能重复
@@ -85,7 +88,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         queryWrapper.eq("planetCode", planetCode);
         count = userMapper.selectCount(queryWrapper);
         if(count > 0){
-            return -1;
+            throw new BusinessException(ErrorCode.REPEAT_ERROR,"邀请码重复");
         }
 
         // 2. 加密 Note：使用加密工具库 DigestUtils。
@@ -97,7 +100,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         user.setPlanetCode(planetCode);
         boolean saveResult = this.save(user);
         if (!saveResult){
-            return -1;
+//            return -1;
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "插入数据失败");
         }
         return user.getId();
     }
@@ -106,20 +110,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public User userLogin(String userAccount, String userPassword, HttpServletRequest request) {
         // 1. 校验
         if(StringUtils.isAnyBlank(userAccount, userPassword)){
-            return null;
+//            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
         }
         if (userAccount.length() < 4){
-            return null;
+//            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号长度少于4位");
         }
         if (userPassword.length() < 8){ //密码必须大于等于8位
-            return null;
+//            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码长度少于8位");
         }
 
         //账户不能包含特殊字符
         String validPattern = "[`~!@#$%^&*()+=|{}':;',\\\\[\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
         Matcher matcher = Pattern.compile(validPattern).matcher(userAccount);
         if (matcher.find()) {
-            return null;
+//            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号存在特殊字符");
         }
 
         // 2. 加密 使用加密工具库 DigestUtils
@@ -135,7 +143,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
              * Note: 可以使用注解 @Slf4j来直接使用 log对象; @Slf4j是用来做日志输出的
              */
             log.info("user login failed, userAccount cannot match userPassword");
-            return null;
+            // return null;
+            throw new BusinessException(ErrorCode.NULL_ERROR, "账号不存在或密码错误");
+
         }
 
         // 3. 用户脱敏
@@ -155,7 +165,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Override
     public User getSafetyUser(User originalUser){
         if(originalUser == null){
-           return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
         }
          User safetyUser = new User();
          /**
