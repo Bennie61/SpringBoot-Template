@@ -3,7 +3,7 @@
 # 技术选型
 ## 后端选型
 * Java 编程语言
-* Spring（依赖注入框架，帮助你管理 Java 对象，集成一些其他的内容）
+* Spring（依赖注入框架，帮助管理 Java 对象，集成一些其他的内容）
 * SpringMVC（web 框架，提供接口访问、restful接口等能力） 
 + SpringBoot（快速启动 / 快速集成项目。不用自己管理 spring 配置，不用自己整合各种框架）
 * MyBatis Plus 数据访问框架
